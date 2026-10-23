@@ -41,7 +41,8 @@ def run(ticker: str, date: str) -> dict:
     path = ta.save_reports(state, ticker)
     return {
         "ticker": ticker, "date": date, "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-        "seconds": round(time.time() - started), "rating": state.get("final_rating"), "decision": decision,
+        "seconds": round(time.time() - started), "rating": state.get("final_rating") or decision,
+        "decision": state.get("final_trade_decision") or decision,
         "hormuz_report": state.get("hormuz_report", ""), "report_dir": str(path),
         "models": {"quick": ta.config["quick_think_llm"], "deep": ta.config["deep_think_llm"]},
         "disclaimer": "Recherche automatisée par modèles d'IA ; pas un conseil en investissement.",
@@ -51,7 +52,7 @@ def run(ticker: str, date: str) -> dict:
 def main() -> int:
     tickers = sys.argv[1:] or ["TTE"]
     date = dt.date.today().isoformat()
-    out = Path(DEFAULT_CONFIG["results_dir"]) / "hormuz_notes.json"
+    out = Path(__file__).resolve().parent / "results" / "hormuz_notes.json"  # lu par Hormuz Watch
     notes = json.loads(out.read_text()) if out.exists() else []
     for t in tickers:
         note = run(t, date)
